@@ -66,7 +66,7 @@ const barOption = computed<ECOption>(() => {
         deviationStore.stationsAndNationalFormatted(data);
     const plotAmountToDisplay = stationsAndNational.length || 1;
 
-    return {
+    const option: ECOption = {
         dataset: stationsAndNational.map((stationOrNational) => ({
             dimensions: [
                 "date",
@@ -158,9 +158,11 @@ const barOption = computed<ECOption>(() => {
                 );
             },
         },
+        // TODO: xAxisIndex must be a number, what does "all" mean ? Refer to : https://echarts.apache.org/en/option.html#dataZoom
         dataZoom: [{ xAxisIndex: "all", type: "inside", minSpan: 20 }],
         graphic: CHART_ATTRIBUTION_GRAPHIC,
     };
+    return option;
 });
 
 const calendarOption = computed<ECOption | EChartsOption>(() => {

@@ -6,10 +6,13 @@ const COLOR_COLD = "#1976d2";
 export function recordsPyramidTooltipFormatter(
     params: TooltipComponentFormatterCallbackParams,
 ): string {
-    if (!Array.isArray(params) || !params.length) return "";
+    if (!Array.isArray(params)) return "";
 
-    const label = String(params[0]?.axisValue ?? "");
-    const row = params[0].value as {
+    const param = params[0];
+    if (!param) return "";
+
+    const label = String(param?.axisValue ?? "");
+    const row = param.value as {
         period: string;
         hot: number;
         cold: number;

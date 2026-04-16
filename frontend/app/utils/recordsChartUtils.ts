@@ -1,17 +1,14 @@
 import type { TemperatureRecordsResponse } from "~/types/api";
 import type { GranularityType } from "~/components/ui/commons/selectBar/types";
-import type { SeriesOption } from "echarts";
-
-type ScatterSeriesOption = Extract<SeriesOption, { type?: "scatter" }>;
-type BarSeriesOption = Extract<SeriesOption, { type?: "bar" }>;
+import type { BarSeriesOption, ScatterSeriesOption } from "echarts/charts";
 
 export function scatterSeries(
     opts: Partial<ScatterSeriesOption>,
-): SeriesOption {
+): ScatterSeriesOption {
     return { type: "scatter", ...opts };
 }
 
-export function barSeries(opts: Partial<BarSeriesOption>): SeriesOption {
+export function barSeries(opts: Partial<BarSeriesOption>): BarSeriesOption {
     return { type: "bar", ...opts };
 }
 
@@ -26,8 +23,8 @@ export function flattenHotRecords(
 ): RecordEntry[] {
     return data.stations.flatMap((station) =>
         station.hot_records.map((record) => ({
-            date: record.date,
-            value: record.value,
+            date: record.record_date,
+            value: record.record_value,
             station: station.name,
         })),
     );
@@ -38,8 +35,8 @@ export function flattenColdRecords(
 ): RecordEntry[] {
     return data.stations.flatMap((station) =>
         station.cold_records.map((record) => ({
-            date: record.date,
-            value: record.value,
+            date: record.record_date,
+            value: record.record_value,
             station: station.name,
         })),
     );

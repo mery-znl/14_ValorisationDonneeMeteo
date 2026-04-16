@@ -94,7 +94,7 @@ const option = computed<ECOption>(() => {
         splitLine: { lineStyle: { type: "dashed" } },
     };
 
-    return {
+    const option: ECOption = {
         dataset: periodData.map(
             ({ hotByPeriod, coldByPeriod, allPeriods }) => ({
                 dimensions: ["period", "hot", "cold"],
@@ -189,6 +189,7 @@ const option = computed<ECOption>(() => {
             }),
         ]),
     };
+    return option;
 });
 </script>
 

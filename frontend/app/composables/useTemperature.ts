@@ -43,7 +43,6 @@ export function useTemperatureDeviation(
     watch(
         [isEnabled, hasRequiredParams, params],
         ([enabled, hasParams]) => {
-            console.log("watch triggered", { enabled, hasParams });
             if (enabled && hasParams) {
                 result.execute();
             } else if (!hasParams) {
@@ -106,7 +105,7 @@ export function useTemperatureExtremes(
 }
 
 export function useTemperatureRecords(
-    params?: MaybeRef<TemperatureRecordsParams>,
+    params: MaybeRef<TemperatureRecordsParams>,
     enabled?: MaybeRef<boolean>,
 ) {
     const { useApiFetch } = useApiClient();
@@ -123,7 +122,7 @@ export function useTemperatureRecords(
         "/temperature/records",
         {
             query: params,
-            imediate: isEnabled.value,
+            immediate: isEnabled.value,
             watch: false,
         },
     );

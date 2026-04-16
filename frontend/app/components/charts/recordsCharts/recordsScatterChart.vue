@@ -3,15 +3,14 @@ import * as echarts from "echarts/core";
 import langFR from "~/i18n/langFR.js";
 import type { SelectBarAdapter } from "~/components/ui/commons/selectBar/types";
 import type { TemperatureRecordsResponse } from "~/types/api";
-import type { EChartsOption } from "echarts";
 import {
+    DataZoomComponent,
     GridComponent,
+    LegendComponent,
     TitleComponent,
     TooltipComponent,
-    LegendComponent,
-    DataZoomComponent,
 } from "echarts/components";
-import { ScatterChart, BarChart } from "echarts/charts";
+import { BarChart, ScatterChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import { UniversalTransition } from "echarts/features";
 import { recordsChartTooltipFormatter } from "~/components/charts/tooltipFormatters/recordsChartTooltipFormatter";
@@ -50,7 +49,7 @@ const initOptions = computed(() => ({
 }));
 provide(INIT_OPTIONS_KEY, initOptions);
 
-const option = computed<EChartsOption>(() => {
+const option = computed<ECOption>(() => {
     const data = props.adapter.data.value;
     if (!data) return {};
 

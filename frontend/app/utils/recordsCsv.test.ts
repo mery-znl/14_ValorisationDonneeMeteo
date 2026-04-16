@@ -5,6 +5,7 @@ import type { TemperatureRecordFlatEntry } from "~/types/api";
 const makeRecord = (
     overrides: Partial<TemperatureRecordFlatEntry> = {},
 ): TemperatureRecordFlatEntry => ({
+    station_id: "75114001",
     station_name: "Paris-Montsouris",
     department: "75",
     record_value: 42.6,
