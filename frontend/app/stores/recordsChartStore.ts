@@ -78,19 +78,21 @@ export const useRecordsChartStore = defineStore("recordChartStore", () => {
     );
 
     const territoire = computed(() => {
-        const first = selectedElements.value[0];
-        if (!first || first.type === TerritoryFilterType.TERRITORY)
-            return "france";
-        if (first.type === TerritoryFilterType.STATION) return "station";
-        if (first.type === TerritoryFilterType.DEPARTMENT) return "department";
+        const els = selectedElements.value;
+        if (els.length !== 1) return "france";
+        const only = els[0]!;
+        if (only.type === TerritoryFilterType.TERRITORY) return "france";
+        if (only.type === TerritoryFilterType.STATION) return "station";
+        if (only.type === TerritoryFilterType.DEPARTMENT) return "department";
         return "region";
     });
 
     const territoireId = computed<string | undefined>(() => {
-        const first = selectedElements.value[0];
-        if (!first || first.type === TerritoryFilterType.TERRITORY)
-            return undefined;
-        return first.id;
+        const els = selectedElements.value;
+        if (els.length !== 1) return undefined;
+        const only = els[0]!;
+        if (only.type === TerritoryFilterType.TERRITORY) return undefined;
+        return only.id;
     });
 
     const params = computed<TemperatureRecordsGraphParams>(() => ({
@@ -185,7 +187,16 @@ export const useRecordsChartStore = defineStore("recordChartStore", () => {
     }
 
     function setStationFilter(station: Station) {
+        if (
+            selectedElements.value.some(
+                (el) =>
+                    el.type === TerritoryFilterType.STATION &&
+                    el.id === station.code,
+            )
+        )
+            return;
         selectedElements.value = [
+            ...selectedElements.value,
             {
                 id: station.code,
                 value: `${station.nom} (${station.departement})`,

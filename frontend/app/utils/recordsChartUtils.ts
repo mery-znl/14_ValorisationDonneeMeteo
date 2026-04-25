@@ -75,16 +75,52 @@ export function countByPeriod(
     );
 }
 
+function recordsForTerritory(
+    territory: { type: string; id: string },
+    data: TemperatureRecordsGraphResponse,
+): { hot: RecordEntry[]; cold: RecordEntry[] } {
+    if (territory.type !== "STATION") {
+        return { hot: flattenHotRecords(data), cold: flattenColdRecords(data) };
+    }
+    return {
+        hot: data.records
+            .filter(
+                (r) =>
+                    r.type_records === "hot" && r.station_id === territory.id,
+            )
+            .map((r) => ({
+                date: r.date,
+                value: r.valeur,
+                station: r.station_name,
+            })),
+        cold: data.records
+            .filter(
+                (r) =>
+                    r.type_records === "cold" && r.station_id === territory.id,
+            )
+            .map((r) => ({
+                date: r.date,
+                value: r.valeur,
+                station: r.station_name,
+            })),
+    };
+}
+
 export function buildTerritoryPlots(
     selectedTerritories: Array<{ type: string; id: string; value: string }>,
     data: TemperatureRecordsGraphResponse,
 ): { name: string; hot: RecordEntry[]; cold: RecordEntry[] }[] {
-    const name = selectedTerritories[0]?.value ?? "France Métropolitaine";
-    return [
-        {
-            name,
-            hot: flattenHotRecords(data),
-            cold: flattenColdRecords(data),
-        },
-    ];
+    if (selectedTerritories.length === 0) {
+        return [
+            {
+                name: "France Métropolitaine",
+                hot: flattenHotRecords(data),
+                cold: flattenColdRecords(data),
+            },
+        ];
+    }
+    return selectedTerritories.map((t) => ({
+        name: t.value,
+        ...recordsForTerritory(t, data),
+    }));
 }
