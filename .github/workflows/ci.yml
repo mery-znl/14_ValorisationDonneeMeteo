@@ -47,7 +47,6 @@ jobs:
         working-directory: backend
         run: |
           uv run ruff check .
-          # Le formatage est géré par pre-commit localement ; ici on garde un lint strict.
 
       - name: Upload test report
         if: always()
