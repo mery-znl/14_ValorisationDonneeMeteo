@@ -28,4 +28,3 @@ def metrics(_request: HttpRequest) -> HttpResponse:
         "",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain; version=0.0.4")
-
