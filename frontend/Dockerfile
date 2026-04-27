@@ -2,6 +2,9 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
+# Nuxt build peut consommer beaucoup de heap; on augmente la limite pour éviter OOM en Docker Desktop.
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 COPY package*.json .
 
 RUN npm install
