@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  backend:
+    name: Backend - tests & lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          uv sync --extra dev
+          cp .env.example .env
+
+      - name: Start db
+        working-directory: backend/timescaledb-env
+        run: docker compose up -d --wait
+
+      - name: Run tests (JUnit report)
+        working-directory: backend
+        run: |
+          mkdir -p ../reports
+          uv run pytest --junitxml=../reports/backend-junit.xml
+
+      - name: Run linter (ruff)
+        working-directory: backend
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: reports/backend-junit.xml
+
+  frontend:
+    name: Frontend - tests & lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: |
+          npm ci --legacy-peer-deps
+          cp .env.example .env
+
+      - name: Run linter (eslint)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run tests (JUnit report)
+        working-directory: frontend
+        run: |
+          mkdir -p ../reports
+          npm run test:ci -- --reporter=junit --outputFile=../reports/frontend-junit.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-report
+          path: reports/frontend-junit.xml
+
+  security:
+    name: Security - dependency + repo scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Backend dependency audit (pip-audit)
+        working-directory: backend
+        run: |
+          mkdir -p ../reports
+          uv sync --extra dev
+          uv tool run pip-audit -f json -o ../reports/pip-audit.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Frontend dependency audit (npm audit)
+        working-directory: frontend
+        run: |
+          mkdir -p ../reports
+          npm ci --legacy-peer-deps
+          npm audit --audit-level=high --json > ../reports/npm-audit.json || true
+
+      - name: Trivy repo scan (SARIF)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "reports/trivy-fs.sarif"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            reports/pip-audit.json
+            reports/npm-audit.json
+            reports/trivy-fs.sarif
+
+  docker:
+    name: Docker - build (push on main)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs:
+      - backend
+      - frontend
+      - security
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lowercase repo name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (and push on main) backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+
+      - name: Build (and push on main) frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
