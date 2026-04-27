@@ -166,6 +166,26 @@ jobs:
           severity: "CRITICAL,HIGH"
           ignore-unfixed: true
 
+      - name: Trivy repo scan (JSON)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "json"
+          output: "reports/trivy-fs.json"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+
+      - name: Trivy VEX (CycloneDX)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "cyclonedx"
+          output: "reports/trivy.vex.json"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+
       - name: Upload security reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -175,6 +195,8 @@ jobs:
             reports/pip-audit.json
             reports/npm-audit.json
             reports/trivy-fs.sarif
+            reports/trivy-fs.json
+            reports/trivy.vex.json
 
   docker:
     name: Docker - build (push on main)
