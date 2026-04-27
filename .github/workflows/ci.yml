@@ -156,16 +156,6 @@ jobs:
           npm ci --legacy-peer-deps
           npm audit --audit-level=high --json > ../reports/npm-audit.json || true
 
-      - name: Trivy repo scan (SARIF)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "sarif"
-          output: "reports/trivy-fs.sarif"
-          severity: "CRITICAL,HIGH"
-          ignore-unfixed: true
-
       - name: Trivy repo scan (JSON)
         uses: aquasecurity/trivy-action@master
         with:
@@ -194,7 +184,6 @@ jobs:
           path: |
             reports/pip-audit.json
             reports/npm-audit.json
-            reports/trivy-fs.sarif
             reports/trivy-fs.json
             reports/trivy.vex.json
 
