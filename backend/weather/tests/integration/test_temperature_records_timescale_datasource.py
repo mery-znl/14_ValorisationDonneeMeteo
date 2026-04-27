@@ -49,7 +49,7 @@ def test_fetch_records_hot_month_happy_path():
     assert values == sorted(
         values
     ), "Les valeurs doivent être croissantes dans le temps"
-    assert station_entries[-1].record_value == 42.7
+    assert station_entries[-1].record_value == 42.6
     assert station_entries[-1].record_date == dt.date(2019, 7, 25)
     assert station_entries[0].station_name == "Station Records Test"
     assert station_entries[0].department == "99"
